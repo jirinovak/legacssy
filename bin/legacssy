@@ -1,0 +1,52 @@
+#!/usr/bin/env node
+
+var concat = require('concat-stream');
+var legacssy = require('../src/legacssy');
+var Readable = require('stream').Readable;
+var commander = require('commander');
+var fs = require('fs');
+
+var version = require('../package.json').version;
+var defaults = require('../src/defaults');
+
+var cmd = commander
+    .version(version)
+    .usage('[options] <input>')
+    .option('-l, --legacy-width <n>', 'legacy viewport width', parseInt, defaults.legacyWidth)
+    .option('-m, --no-matching-only', 'even media queries with non matching min-width and max-width are flattened')
+    .option('-r, --overrides-only', 'only rules inside media queries are flattened')
+    .option('-o, --output <file>', 'target file otherwise stdout')
+    .parse(process.argv);
+
+var argc = process.argv.length;
+var fromStdin = !process.env.__DIRECT__ && !process.stdin.isTTY;
+
+if (!fromStdin && (argc == 2 || cmd.args.length == 0)) {
+    cmd.help();
+}
+
+var options = {
+    legacyWidth: cmd.legacyWidth,
+    matchingOnly: !Boolean(cmd.noMathingOnly),
+    overridesOnly: Boolean(cmd.overridesOnly)
+};
+
+var output = process.stdout;
+var input = process.stdin;
+if (cmd.output) {
+    output = fs.createWriteStream(cmd.output);
+}
+if (cmd.args.length) {
+    input = fs.createReadStream(cmd.args[0]);
+}
+
+input.pipe(concat(function (buffer) {
+    var rs = new Readable();
+
+    rs._read = function () {
+        rs.push(legacssy(buffer.toString(), options));
+        rs.push(null);
+    };
+
+    rs.pipe(output);
+}));

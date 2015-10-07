@@ -23,5 +23,12 @@
     "name": "Jiří Novák",
     "email": "novak.jira@gmail.com"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jirinovak/legacssy"
+  },
+  "bugs": {
+    "url": "https://github.com/jirinovak/legacssy/issues"
+  }
 }
